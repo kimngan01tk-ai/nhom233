@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bảng điều khiển giám sát kiểm tra chứng từ hàng nhập | Công ty Cổ phần Logistics U&amp;I</title>
+<style>
+:root{--bg:#eef6fc;--card:#fff;--ink:#1f3a52;--mute:#5b7a93;--pri:#7fb8e6;--pri2:#d8ebf8;--line:#d6e6f2;--ok:#a8e0c4;--warn:#fbe3a4;--bad:#f28b8b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14232f;--card:#1c3040;--ink:#e3f0fa;--mute:#9db8cc;--pri:#5a9bcc;--pri2:#24445a;--line:#2c4a60;--ok:#2f6b50;--warn:#7a6628;--bad:#b04a4a}}
+:root[data-theme="dark"]{--bg:#14232f;--card:#1c3040;--ink:#e3f0fa;--mute:#9db8cc;--pri:#5a9bcc;--pri2:#24445a;--line:#2c4a60;--ok:#2f6b50;--warn:#7a6628;--bad:#b04a4a}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+header,main,nav{max-width:1100px;margin:auto;padding-left:16px;padding-right:16px}
+header{padding-top:18px}h1{font-size:20px;margin:0}h2{font-size:16px;margin:0 0 8px}.sub{color:var(--mute);font-size:13px;margin:2px 0 8px}
+nav{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);display:flex;gap:6px;overflow-x:auto;padding-top:6px;padding-bottom:6px;z-index:5}
+nav button,.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:18px;cursor:pointer;font:inherit;font-size:14px;white-space:nowrap}
+nav button.on,.btn.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.kpi small{color:var(--mute);display:block}.kpi b{font-size:25px}
+.bar{height:12px;border-radius:6px;background:var(--pri2);overflow:hidden;margin:2px 0 8px}.bar i{display:block;height:100%;background:var(--pri)}
+.row{display:flex;justify-content:space-between;font-size:13px;gap:8px}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;white-space:nowrap}th{background:var(--pri2)}
+tbody tr{cursor:pointer}tbody tr:hover{background:var(--pri2)}
+.chip{display:inline-block;padding:2px 12px;border-radius:6px;font-size:12px;color:#1f3a52;min-width:64px;text-align:center}
+.m0{background:var(--ok)}.m1{background:var(--warn)}.m2{background:var(--bad);color:#fff}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+select,input[type=text],input[type=number]{padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px}
+label{font-size:13px;display:block;margin:5px 0}
+pre{background:#14232f;color:#d8ebf8;padding:14px;border-radius:12px;overflow:auto;font:12px/1.55 Consolas,monospace;max-height:560px}
+.note{font-size:12px;color:var(--mute)}
+</style></head><body>
+<header><h1>BẢNG ĐIỀU KHIỂN GIÁM SÁT KIỂM TRA CHỨNG TỪ HÀNG NHẬP</h1>
+<p class="sub">Công ty Cổ phần Logistics U&amp;I · Kho ngoại quan · Dữ liệu mô phỏng để minh họa giải pháp (thay bằng dữ liệu thật của công ty) · <span id="capNhat"></span></p></header>
+<nav id="nav"></nav>
+<main>
+<!-- ===== TAB 1: BẢNG ĐIỀU KHIỂN ===== -->
+<section id="s0">
+<div class="card filters"><b>Bộ lọc:</b>
+<select id="fKhoang"><option value="7">7 ngày gần nhất</option><option value="30" selected>30 ngày gần nhất</option><option value="90">90 ngày gần nhất</option></select>
+<select id="fKetQua"><option value="">Mọi kết quả</option><option value="0">Xanh (khớp)</option><option value="1">Vàng (cần xem lại)</option><option value="2">Đỏ (lỗi nặng)</option></select>
+<select id="fChuHang"></select>
+<button class="btn pri" id="btnLamMoi">Làm mới dữ liệu</button></div>
+<div class="grid" id="kpi"></div>
+<div class="grid"><div class="card"><h2>Quy tắc nào bị vi phạm nhiều nhất</h2><div id="pareto"></div></div>
+<div class="card"><h2>Tỷ lệ lô có sai sót theo tuần (phần trăm)</h2><div id="xuHuong"></div></div></div>
+<div class="card"><h2>Danh sách lô hàng (bấm vào một dòng để xem chi tiết)</h2>
+<div class="scroll"><table id="bang"></table></div></div>
+<div class="card" id="chiTiet" style="display:none"></div>
+</section>
+<!-- ===== TAB 2: KIỂM TRA MỘT LÔ MỚI ===== -->
+<section id="s1"><div class="card"><h2>Kiểm tra một lô hàng mới</h2>
+<p class="note">Nhập thông tin đọc từ các chứng từ, bấm kiểm tra. Mặc định là lô minh họa ở Chương 2 (có ba lỗi).</p>
+<div class="grid">
+<label>Số kiện trên hóa đơn<br><input id="n_kienHoaDon" type="number" value="480"></label>
+<label>Số kiện trên phiếu đóng gói<br><input id="n_kienPhieu" type="number" value="480"></label>
+<label>Số kiện trên vận đơn<br><input id="n_kienVanDon" type="number" value="480"></label>
+<label>Số kiện nhập vào hệ thống kho<br><input id="n_kienKho" type="number" value="480"></label>
+<label>Trọng lượng cả bì trên hóa đơn (kilôgam)<br><input id="n_tlHoaDon" type="number" value="9640"></label>
+<label>Trọng lượng cả bì trên phiếu (kilôgam)<br><input id="n_tlPhieu" type="number" value="9460"></label>
+<label>Số container trên vận đơn<br><input id="n_contVanDon" type="text" value="ABCU1234567"></label>
+<label>Số container trên giấy báo hàng đến<br><input id="n_contBao" type="text" value="ABCU1234576"></label>
+<label>Mô tả hàng trên hóa đơn<br><input id="n_moTaHoaDon" type="text" value="PCB assembly, 12 models"></label>
+<label>Mô tả hàng trên giấy chứng nhận xuất xứ<br><input id="n_moTaXuatXu" type="text" value="electronic parts"></label>
+</div><p><button class="btn pri" id="btnKiem">Kiểm tra</button></p><div id="ketQuaMoi"></div></div></section>
+<!-- ===== TAB 3: MÃ NGUỒN ===== -->
+<section id="s2"><div class="card"><h2>Mã nguồn bộ quy tắc đối chiếu chứng từ</h2>
+<p class="note">Đoạn mã dưới đây chính là phần đang chạy trên trang này. Mỗi quy tắc là một hàm nhỏ, dễ đọc, dễ thêm bớt.</p><pre id="maNguon"></pre></div></section>
+</main>
+<script id="app">
+// ===== 1. THÔNG TIN CHUNG VÀ DỮ LIỆU MẪU =====
+const CHU_HANG = ["Công ty A", "Công ty B", "Công ty C", "Công ty D", "Công ty E"];
+const NHA_CUNG_CAP_HOP_LE = ["Nhà cung cấp 1", "Nhà cung cấp 2", "Nhà cung cấp 3", "Nhà cung cấp 4"];
+const MO_TA_HANG = ["PCB assembly", "Plastic resin", "Machine parts", "Cotton fabric", "LED modules"];
+const DUNG_SAI_TRONG_LUONG = 0.5;      // phần trăm cho phép lệch trọng lượng
+const GIO_TOI_DA = 8;                  // thời hạn cam kết kiểm tra chứng từ (giờ)
+const CHI_PHI = { 0: 0, 1: 0.4, 2: 1.9 }; // triệu đồng cho mỗi lô theo mức kết quả
+let duLieu = [];                       // danh sách lô hàng đang hiển thị
+
+// Bộ sinh số ngẫu nhiên có hạt giống: cùng hạt giống thì cùng dữ liệu
+function sinhSo(hat) {
+  return function () {
+    hat |= 0; hat = (hat + 0x6D2B79F5) | 0;
+    let t = Math.imul(hat ^ (hat >>> 15), 1 | hat);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function chonNgau(r, mang) { return mang[Math.floor(r() * mang.length)]; }
+
+// Tạo một lô hàng hợp lệ, sau đó cố ý gây lỗi theo xác suất
+function taoLo(r, i) {
+  const kien = 100 + Math.floor(r() * 800);
+  const tl = Math.round(kien * (18 + r() * 6));
+  const ngayNhan = new Date(Date.now() - Math.floor(r() * 90) * 86400000);
+  const cont = chonNgau(r, ["TCLU", "MSKU", "OOLU", "CMAU"]) + String(1000000 + Math.floor(r() * 8999999));
+  const moTa = chonNgau(r, MO_TA_HANG);
+  const lo = {
+    maLo: "LH" + String(2600 + i), ngayNhan, chuHang: chonNgau(r, CHU_HANG),
+    nhaCungCap: chonNgau(r, NHA_CUNG_CAP_HOP_LE),
+    kienHoaDon: kien, kienPhieu: kien, kienVanDon: kien, kienKho: kien,
+    tlHoaDon: tl, tlPhieu: tl, contVanDon: cont, contBao: cont,
+    moTaHoaDon: moTa, moTaXuatXu: moTa, maHang: "85423100",
+    ngayHoaDon: -10, ngayVanDon: -7, ngayTauDen: -2, // số ngày tính từ ngày nhận (âm là trước)
+    yeuCauXuatXu: r() < 0.5, coXuatXu: true, duBoChungTu: true, trungLap: false
+  };
+  if (r() < 0.16) gayLoi(lo, r);          // khoảng 16 phần trăm lô có sai sót
+  if (r() < 0.10) gayLoi(lo, r);          // một số lô có hai lỗi
+  lo.ketQua = doiChieu(lo);               // chạy bộ quy tắc
+  lo.muc = Math.max(...lo.ketQua.map(k => k.muc));
+  lo.gioKiem = +(1.5 + r() * 4.5 + (lo.muc ? 3 + r() * (lo.muc === 2 ? 10 : 4) : 0)).toFixed(1);
+  lo.xuLy = lo.muc === 0 ? "Hoàn tất" : (lo.muc === 2 && r() < 0.6 ? "Đang chờ chủ hàng" : "Đã xử lý");
+  lo.chiPhi = CHI_PHI[lo.muc];
+  return lo;
+}
+// Gây một lỗi theo tỷ lệ gần với biểu đồ Pareto của Chương 2
+function gayLoi(lo, r) {
+  const x = r() * 100;
+  if (x < 20) lo.kienPhieu -= 2;                       // lệch số kiện
+  else if (x < 32) lo.tlPhieu = Math.round(lo.tlPhieu * (r() < 0.4 ? 1.003 : 1.04));
+  else if (x < 47) lo.contBao = lo.contVanDon.slice(0, 9) + "9" + lo.contVanDon.slice(10);
+  else if (x < 57) lo.nhaCungCap = "Nhà cung cấp lạ";
+  else if (x < 75) lo.moTaXuatXu = "electronic parts";
+  else if (x < 80) lo.ngayHoaDon = 1;
+  else if (x < 93) lo.coXuatXu = false;
+  else lo.duBoChungTu = false;
+}
+
+// ===== 2. BỘ QUY TẮC ĐỐI CHIẾU =====
+// Mức kết quả: 0 = đạt (xanh), 1 = cần xem lại (vàng), 2 = lỗi nặng (đỏ)
+const QUY_TAC = [
+  { ma: "R1", ten: "Số kiện thống nhất giữa các chứng từ và hệ thống kho",
+    kiem: l => (l.kienHoaDon === l.kienPhieu && l.kienPhieu === l.kienVanDon && l.kienVanDon === l.kienKho)
+      ? [0, "Khớp"] : [2, `Hóa đơn ${l.kienHoaDon}, phiếu ${l.kienPhieu}, vận đơn ${l.kienVanDon}, kho ${l.kienKho}`] },
+  { ma: "R2", ten: "Trọng lượng cả bì không lệch quá mức cho phép",
+    kiem: l => { const d = Math.abs(l.tlHoaDon - l.tlPhieu) / l.tlHoaDon * 100;
+      return d === 0 ? [0, "Khớp"] : d <= DUNG_SAI_TRONG_LUONG ? [1, `Lệch ${d.toFixed(2)}%, trong mức cho phép`] : [2, `Lệch ${d.toFixed(2)}%, vượt mức cho phép`]; } },
+  { ma: "R3", ten: "Số container giống nhau và đúng dạng chuẩn",
+    kiem: l => /^[A-Z]{4}\d{7}$/.test(l.contVanDon) && l.contVanDon === l.contBao
+      ? [0, "Khớp"] : [2, `Vận đơn ${l.contVanDon}, giấy báo ${l.contBao}`] },
+  { ma: "R4", ten: "Nhà cung cấp có trong danh sách đã đăng ký",
+    kiem: l => NHA_CUNG_CAP_HOP_LE.includes(l.nhaCungCap) ? [0, "Khớp"] : [1, `Chưa đăng ký: ${l.nhaCungCap}`] },
+  { ma: "R5", ten: "Mô tả hàng thống nhất và mã số hàng hóa hợp lệ",
+    kiem: l => l.moTaHoaDon === l.moTaXuatXu && /^\d{8}$/.test(l.maHang)
+      ? [0, "Khớp"] : [1, `Hóa đơn "${l.moTaHoaDon}", chứng nhận "${l.moTaXuatXu}"`] },
+  { ma: "R6", ten: "Ngày hóa đơn, ngày vận đơn, ngày tàu đến đúng thứ tự",
+    kiem: l => (l.ngayHoaDon <= l.ngayVanDon && l.ngayVanDon <= l.ngayTauDen) ? [0, "Đúng thứ tự"] : [1, "Ngày hóa đơn muộn hơn ngày vận đơn"] },
+  { ma: "R7", ten: "Giấy chứng nhận xuất xứ đầy đủ khi yêu cầu ưu đãi",
+    kiem: l => (!l.yeuCauXuatXu || l.coXuatXu) ? [0, "Đạt"] : [2, "Thiếu giấy chứng nhận xuất xứ"] },
+  { ma: "R8", ten: "Bộ chứng từ đầy đủ và không nhập trùng",
+    kiem: l => (l.duBoChungTu && !l.trungLap) ? [0, "Đạt"] : [2, "Thiếu chứng từ hoặc nhập trùng"] }
+];
+
+// ===== 3. XỬ LÝ =====
+// Chạy toàn bộ quy tắc cho một lô, trả về danh sách kết quả từng quy tắc
+function doiChieu(lo) {
+  return QUY_TAC.map(q => { const [muc, ghiChu] = q.kiem(lo); return { ma: q.ma, ten: q.ten, muc, ghiChu }; });
+}
+const TEN_MUC = ["Xanh", "Vàng", "Đỏ"];
+const dinhDang = d => d.toLocaleDateString("vi-VN");
+const so = (x, k = 1) => x.toFixed(k).replace(".", ",");
+const chip = m => `<span class="chip m${m}">${TEN_MUC[m]}</span>`;
+
+// ===== 4. GIAO DIỆN =====
+const TEN_TAB = ["Bảng điều khiển", "Kiểm tra lô mới", "Mã nguồn"];
+const nav = document.getElementById("nav");
+TEN_TAB.forEach((t, i) => { const b = document.createElement("button"); b.textContent = t; b.onclick = () => hienTab(i); nav.appendChild(b); });
+function hienTab(k) { TEN_TAB.forEach((_, i) => { document.getElementById("s" + i).className = i === k ? "on" : ""; nav.children[i].className = i === k ? "on" : ""; }); }
+
+function locDuLieu() {
+  const ngay = +document.getElementById("fKhoang").value, kq = document.getElementById("fKetQua").value, ch = document.getElementById("fChuHang").value;
+  const moc = Date.now() - ngay * 86400000;
+  return duLieu.filter(l => l.ngayNhan >= moc && (kq === "" || l.muc === +kq) && (ch === "" || l.chuHang === ch))
+               .sort((a, b) => b.ngayNhan - a.ngayNhan);
+}
+function veTrang() {
+  const ds = locDuLieu(), tong = ds.length || 1;
+  const loi = ds.filter(l => l.muc > 0), do_ = ds.filter(l => l.muc === 2);
+  const dungHan = ds.filter(l => l.gioKiem <= GIO_TOI_DA).length;
+  const canhBao = ds.filter(l => l.gioKiem > GIO_TOI_DA || l.xuLy === "Đang chờ chủ hàng").length;
+  const the = [["Tổng số lô", ds.length], ["Tỷ lệ lô có sai sót", so(loi.length / tong * 100) + "%"], ["Lô lỗi nặng (đỏ)", do_.length],
+    ["Kiểm xong trong 8 giờ", so(dungHan / tong * 100) + "%"], ["Chi phí phát sinh (triệu đồng)", so(ds.reduce((s, l) => s + l.chiPhi, 0))], ["Cảnh báo cần xử lý", canhBao]];
+  document.getElementById("kpi").innerHTML = the.map((t, i) => `<div class="card kpi"><small>${t[0]}</small><b style="${i === 5 && canhBao ? "color:#d9534f" : ""}">${t[1]}</b></div>`).join("");
+  // Biểu đồ Pareto: đếm số lần mỗi quy tắc bị vi phạm
+  const dem = QUY_TAC.map(q => [q.ma + ". " + q.ten, ds.filter(l => l.ketQua.find(k => k.ma === q.ma).muc > 0).length]).sort((a, b) => b[1] - a[1]);
+  const max = Math.max(1, dem[0][1]);
+  document.getElementById("pareto").innerHTML = dem.map(d => `<div class="row"><span>${d[0]}</span><b>${d[1]}</b></div><div class="bar"><i style="width:${d[1] / max * 100}%"></i></div>`).join("");
+  // Xu hướng theo tuần: 12 tuần gần nhất, vẽ bằng SVG
+  const tuan = Array.from({ length: 12 }, (_, i) => { const den = Date.now() - i * 7 * 86400000, tu = den - 7 * 86400000;
+    const t = duLieu.filter(l => l.ngayNhan >= tu && l.ngayNhan < den); return t.length ? t.filter(l => l.muc > 0).length / t.length * 100 : 0; }).reverse();
+  const m = Math.max(10, ...tuan), pts = tuan.map((v, i) => `${20 + i * 46},${110 - v / m * 90}`).join(" ");
+  document.getElementById("xuHuong").innerHTML = `<svg viewBox="0 0 580 130" width="100%"><polyline fill="none" stroke="var(--pri)" stroke-width="3" points="${pts}"/>` +
+    tuan.map((v, i) => `<circle cx="${20 + i * 46}" cy="${110 - v / m * 90}" r="4" fill="var(--pri)"/><text x="${20 + i * 46}" y="126" font-size="10" text-anchor="middle" fill="var(--mute)">T${i + 1}</text><text x="${20 + i * 46}" y="${100 - v / m * 90}" font-size="10" text-anchor="middle" fill="var(--ink)">${so(v, 0)}</text>`).join("") + `</svg>`;
+  // Bảng lô hàng
+  document.getElementById("bang").innerHTML = "<thead><tr><th>Mã lô</th><th>Ngày nhận</th><th>Chủ hàng</th><th>Số kiện</th><th>Kết quả</th><th>Lỗi phát hiện</th><th>Thời gian kiểm tra</th><th>Xử lý</th><th>Chi phí (triệu đồng)</th></tr></thead><tbody>" +
+    ds.slice(0, 40).map(l => `<tr data-ma="${l.maLo}"><td>${l.maLo}</td><td>${dinhDang(l.ngayNhan)}</td><td>${l.chuHang}</td><td>${l.kienHoaDon}</td><td>${chip(l.muc)}</td>` +
+      `<td>${l.ketQua.filter(k => k.muc).map(k => k.ma).join(", ") || "Không"}</td><td>${l.gioKiem > GIO_TOI_DA ? "⚠ " : ""}${so(l.gioKiem)} giờ</td><td>${l.xuLy}</td><td>${so(l.chiPhi)}</td></tr>`).join("") + "</tbody>";
+  document.querySelectorAll("#bang tbody tr").forEach(tr => tr.onclick = () => chiTiet(tr.dataset.ma));
+}
+function bangQuyTac(kq) {
+  return `<div class="scroll"><table><tr><th>Quy tắc</th><th>Nội dung kiểm tra</th><th>Kết quả</th><th>Ghi chú</th></tr>` +
+    kq.map(k => `<tr><td>${k.ma}</td><td style="white-space:normal">${k.ten}</td><td>${chip(k.muc)}</td><td>${k.ghiChu}</td></tr>`).join("") + "</table></div>";
+}
+function chiTiet(ma) {
+  const l = duLieu.find(x => x.maLo === ma), el = document.getElementById("chiTiet");
+  el.style.display = "block";
+  el.innerHTML = `<h2>Chi tiết lô ${l.maLo} · ${l.chuHang} · ${dinhDang(l.ngayNhan)} · Kết quả chung: ${chip(l.muc)}</h2>` + bangQuyTac(l.ketQua);
+  el.scrollIntoView({ behavior: "smooth" });
+}
+function lamMoi() {
+  const r = sinhSo(Date.now() % 100000);
+  duLieu = Array.from({ length: 150 }, (_, i) => taoLo(r, i));
+  document.getElementById("capNhat").textContent = "Cập nhật lúc " + new Date().toLocaleTimeString("vi-VN");
+  veTrang();
+}
+document.getElementById("fChuHang").innerHTML = '<option value="">Mọi chủ hàng</option>' + CHU_HANG.map(c => `<option>${c}</option>`).join("");
+["fKhoang", "fKetQua", "fChuHang"].forEach(id => document.getElementById(id).onchange = veTrang);
+document.getElementById("btnLamMoi").onclick = lamMoi;
+document.getElementById("btnKiem").onclick = () => {
+  const v = id => document.getElementById("n_" + id).value;
+  const lo = { kienHoaDon: +v("kienHoaDon"), kienPhieu: +v("kienPhieu"), kienVanDon: +v("kienVanDon"), kienKho: +v("kienKho"),
+    tlHoaDon: +v("tlHoaDon"), tlPhieu: +v("tlPhieu"), contVanDon: v("contVanDon"), contBao: v("contBao"), moTaHoaDon: v("moTaHoaDon"), moTaXuatXu: v("moTaXuatXu"),
+    maHang: "85423100", nhaCungCap: "Nhà cung cấp 1", ngayHoaDon: -10, ngayVanDon: -7, ngayTauDen: -2, yeuCauXuatXu: true, coXuatXu: true, duBoChungTu: true, trungLap: false };
+  const kq = doiChieu(lo), muc = Math.max(...kq.map(k => k.muc));
+  document.getElementById("ketQuaMoi").innerHTML = `<h2>Kết luận: ${chip(muc)} ${["Cho phép chuyển sang nhập kho", "Cần hai người cùng xem lại", "Dừng lại và báo chủ hàng"][muc]}</h2>` + bangQuyTac(kq);
+};
+// Hiển thị phần mã nguồn (từ mục 2 đến hết mục 3) trong tab Mã nguồn
+const nguon = document.getElementById("app").textContent;
+document.getElementById("maNguon").textContent = nguon.slice(nguon.indexOf("// ===== 2."), nguon.indexOf("// ===== 4."));
+hienTab(0); lamMoi();
+</script></body></html>
